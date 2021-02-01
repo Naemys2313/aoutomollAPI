@@ -6,8 +6,17 @@ class Database {
     private $password = "";
     public $conn;
 
+    public function __construct(){
+        try {
+            $this->conn = new PDO("mysql:host=".$this->host.";dbname=".$this->db_name, $this->username, $this->password);
+            $this->conn->exec("Set name utf8");
+        } catch (PDOException $exception) {
+            echo "Connection error: ".$exception->getMessage();
+        }     
+    }
+
     public function getConnection() {
-        $this->conn = null;
+        // $this->conn = null;
 
         try {
             $this->conn = new PDO("mysql:host=".$this->host.";dbname=".$this->db_name, $this->username, $this->password);
@@ -123,7 +132,7 @@ class Database {
         if($selection_args != null) {
             $index = 1;
             foreach($selection_args as $selection_arg) {
-                $stmt->bindParam($index, $selection_arg);
+                $stmt->bindValue($index, $selection_arg);
                 $index++;
             }
         }

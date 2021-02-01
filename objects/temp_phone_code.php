@@ -1,66 +1,62 @@
 <?php
 class TempPhoneCode {
-    private $conn ;
+    private $database ;
 
     public $id;
     public $phone;
     public $code;
     public $temp_date;
 
-    function __construct($db) {
-        $this->conn = $db;
+    function __construct($database) {
+        $this->database = $database;
     }
 
-    function readOne() {
-        $query = "SELECT * FROM temp_phone_code WHERE phone = ? ORDER BY date DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(1, htmlspecialchars(strip_tags($this->phone)));
-        $stmt->execute();
+    function read($columns = null, $selection = null, $selection_args = null, $limit = null) {
+        return $this->database->read("temp_phone_code", $columns, $selection, $selection_args, $limit);
+    }
+
+    function readOne($columns = null, $selection = null, $selection_args = null) {
+        if($selection == null) {
+            $selection = "id=?";
+            $selection_args = array();
+            array_push($selection_args, $this->id);
+        }
+        $stmt = $this->read(null, $selection, $selection_args, 1);
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $this->id = $row['id'];
+        $this->phone = $row['phone'];
         $this->code = $row['code'];
         $this->temp_date = $row['date'];
     }
 
-    function findByCode() {
-        $query = "SELECT * FROM temp_phone_code WHERE code = :code AND phone = :phone ORDER BY date DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":code", htmlspecialchars(strip_tags($this->code)));
-        $stmt->bindParam(":phone", htmlspecialchars(strip_tags($this->phone)));
-        $stmt->execute();
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $this->id = $row['id'];
-        $this->temp_date = $row['date'];
+    function readByCodeAndPhone($columns = null) {
+        $selection = "code=? AND phone=?";
+        $selection_args = array();
+        array_push($selection_args, $this->code);
+        array_push($selection_args, $this->phone);
+        $this->readOne($columns, $selection, $selection_args);
     }
 
-    function delete() {
-        $query = "DELETE FROM temp_phone_code WHERE id=:id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id", htmlspecialchars(strip_tags($this->id)));
-        
-        if($stmt->execute()) {
-            return true;
+    function delete($selection = null, $selection_args = null) {
+        if($selection == null) {
+            $selection = "id=?";
+            $selection_args = array();
+            array_push($selection_args, $this->id);
         }
 
-        return false;
+        return $this->database->delete("temp_phone_code", $selection, $selection_args);
     }
 
     function create() {
-        $query = "INSERT INTO temp_phone_code SET phone=:phone, code=:code, date=:date";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":phone", htmlspecialchars(strip_tags($this->phone)));
-        $stmt->bindParam(":code", htmlspecialchars(strip_tags($this->code)));
-        $stmt->bindParam(":date", date("Y-m-d H:i:s"));
-        
-        if($stmt->execute()) {
-            return true;
-        }
+        $content_values = array(
+            "phone" => htmlspecialchars(strip_tags($this->phone)),
+            "code" => htmlspecialchars(strip_tags($this->code)),
+            "date" => htmlspecialchars(strip_tags(date("Y-m-d H-i-s")))
+        );
 
-        return false;
+        return $this->database->insert("temp_phone_code", $content_values);
     }
 
     function isActiveCode() {

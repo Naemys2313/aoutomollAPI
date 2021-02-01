@@ -12,24 +12,23 @@ include_once 'objects/car_model.php';
 include_once 'objects/car_mark.php';
 
 $database = new Database();
-$db = $database->getConnection();
 
-$car = new Car($db);
-$user = new User($db);
-$car_model = new CarModel($db);
-$car_mark = new CarMark($db);
+$car = new Car($database);
+$user = new User($database);
+$car_model = new CarModel($database);
+$car_mark = new CarMark($database);
 
 $user_id = isset($_GET['id']) ? $_GET['id'] : die();
 $data = json_decode(file_get_contents("php://input"));
 
 if(
-    !empty($data->vin) &&
-    !empty($data->label) &&
-    !empty($data->mark) &&
-    !empty($data->model) &&
-    !empty($data->year) &&
-    !empty($data->gosnum) &&
-    !empty($data->mileage) 
+    // !empty($data->vin) &&
+    // !empty($data->label) &&
+    !empty($data->mark_id) &&
+    !empty($data->model_id) &&
+    // !empty($data->year) &&
+    !empty($data->gosnum)
+    // !empty($data->mileage) 
 ) {
     $car->vin = $data->vin;
 
@@ -41,30 +40,15 @@ if(
         $user->readOne();
 
         if($user->name != null) {
-            $car_model->title = $car_model_item;
+            
+            $car_model->id = $data->model_id;
             $car_model->readOne();
-            if($car_model->id == null) {
-                $car_model->title = $car_model_item;
-                if(!$car_model->create()) {
-                    echo "Car model not created.";
-                    return;
-                }
-                $car_model->readOne();
-            }
-
-            $car_mark->title = $car_mark_item;
+    
+            $car_mark->id = $data->mark_id;
             $car_mark->readOne();
-            if($car_mark->id == null) {
-                $car_mark->title = $car_mark_item;
-                if(!$car_mark->create()) {
-                    echo "Car mark not created.";
-                    return;
-                }
-                $car_mark->readOne();
-            }
-
 
             $car->user_id = $user_id;
+            $car->vin = $data->vin;
             $car->label = $data->label;
             $car->mark_id = $car_mark->id;
             $car->model_id = $car_model->id;
