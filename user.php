@@ -23,10 +23,19 @@ $temp_phone_code = new TempPhoneCode($database);
 $request_method = $_SERVER['REQUEST_METHOD'];
 
 if ($request_method == "GET") {
-    $id= isset($_GET['id']) ? $_GET['id'] : die();
-    $user_item = getUser($id);
+    $user_item = null;
+    if(isset($_GET['id'])) {
+        $id= isset($_GET['id']) ? $_GET['id'] : die();
+        $user_item = getUser($id);
 
-    http_response_code(200);
+        http_response_code(200);
+    } else if(isset($_GET['phone'])) {
+        $phone= isset($_GET['phone']) ? $_GET['phone'] : die();
+        $user_item = getUser(null, $phone);
+
+        http_response_code(200);  
+    }
+
     if($user_item != null) {
         printJsonResponse(getResponseWithUser("ok", 0, "success", $user_item));
     } else {
@@ -66,7 +75,7 @@ function getResponseWithUser($status, $errorcode, $message, $user) {
     return $response;
 }
 
-function getUser($id) {
+function getUser($id, $phone = null) {
     $database = new Database();
 
     $car = new Car($database);
@@ -75,10 +84,16 @@ function getUser($id) {
     $car_model = new CarModel($database);
     $car_mark = new CarMark($database);
 
-    $user->id = $id;
-    $user->readOne();
+    if($phone != null) {
+        $user->phone = $phone;
+        $user->readByPhone();
+    } else {
+        $user->id = $id;
+        $user->readOne();
+    }
+    
 
-    if($user->name != null) {
+    if($user->id != null) {
         $car->user_id = $user->id;
         $stmt = $car->readCarsByUserId();
         $num = $stmt->rowCount();
@@ -222,4 +237,3 @@ function updateUser($id) {
 function printJsonResponse($response) {
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
 }
-?>
